@@ -1,0 +1,7 @@
+{
+  "scripts" : {
+    "build" : "npm run clean && tsc && npm run copy-files",
+    "clean" : "rm -rf ./dist",
+    "copy-files" : "cp ./src/public/* ./dist/ -r"
+  }
+}
