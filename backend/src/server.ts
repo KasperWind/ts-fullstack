@@ -1,6 +1,8 @@
 import express, {Express, Request, Response} from 'express'
+import cors from 'cors'
 import dotenv from 'dotenv'
 import { MongoClient } from 'mongodb'
+import { Invoice, Payment } from './Domain'
 
 dotenv.config()
 
@@ -19,14 +21,18 @@ async function run() {
     const options = {}
 
     const sale = await supplies.findOne(query, options)
-    console.log(sale)
+    // console.log(sale)
 }
 
+const result:(Invoice|Payment)[] = [new Invoice('Kasper', 'some stuff', 100 ), new Payment('Kasper', 'some more stuff', 200)]
+
 run().catch(console.dir)
+
+app.use(cors())
 app.use(express.static('./dist/public'))
 
-app.get('/mjello', (req: Request, res: Response) => {
-    res.send('Mjello ')
+app.get('/api/all', (req: Request, res: Response) => {
+    res.status(200).send(JSON.stringify(result))
 })
 
 app.listen(port, () => {
