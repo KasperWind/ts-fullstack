@@ -15,7 +15,7 @@ export class Invoice implements HasFormatter {
     }
 
     format() {
-        return `Sold '${this.details}' to '${this.client}' for '${this.amount}' `
+        return `${this.details} bought from ${this.client} for ${this.amount} dkk`
     }
 }
 
@@ -34,6 +34,6 @@ export class Payment implements HasFormatter {
     }
 
     format() {
-        return `Bought '${this.details}' in '${this.recipient}' for '${this.amount}' `
+        return `Payed ${this.recipient}  ${this.amount} dkk for ${this.details}`
     }
 }

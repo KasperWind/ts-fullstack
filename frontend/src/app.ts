@@ -2,26 +2,6 @@ import {HasFormatter} from './Formatters.js'
 import {ListTemplate} from './Templates.js'
 import {Invoice, Payment} from './Domain.js'
 
-// import {Person} from './Person.js'
-//
-// const persons: Person[]  = [
-//     new Person('Kasper', 'Wind')
-//     ,new Person('Xiulian', 'Chen')
-//     ,new Person('Eva', 'Wind')
-//     ,new Person('Daniel', 'Wind')
-//     ,new Person('Milo', 'Wind')
-// ]
-//
-// const list = document.getElementsByClassName('item-list').item(0) as HTMLUListElement
-// if (list) {
-//     const render  = new ListTemplate(list)
-//     persons.forEach(element => {
-//         
-//         render.render(element, "Family members",  (element.first === 'Eva' ? 'start' : 'end'))
-//         
-//     });
-// }
-
 const form = document.querySelector('.new-item-form') as HTMLFormElement
 
 //inputs
@@ -40,73 +20,47 @@ form.addEventListener('submit', formSubmit)
 // })
 
 const app_name = 'finance_app'
+//let data:(Payment| Invoice)[]
 
-//Cookie
-let cookies = document.cookie
-
-if (cookies === '' || !cookies.includes(app_name)) {
-    createAppCookie()
-}
-
-let data:(Payment| Invoice)[]
-
-if (cookies.includes(app_name)) {
-    console.log('finance app')
-    let app_data = cookies.split('; ').find((row) => row.startsWith(app_name))?.slice(app_name.length + 1)
-    if (app_data === undefined) {
-        createAppCookie()
-    }
-    else {
-        let json = undefined
-        try {
-            json = JSON.parse(app_data)
-            
-        } catch (Error) {
-            console.log('app data not valid json')
-            createAppCookie()
-        }
-        if (json === undefined || !Array.isArray(json)) {
-            console.log('app data not valid')
-            createAppCookie()
-        } else {
-            data = json.map((row) => {
-                let p  = Payment.fromObject(row)
-                if (p) {
-                    return p
+window.onload = (ev: Event) => {
+    getAllData().then((data:(Payment|Invoice)[]) =>{
+        if(data.length > 0) {
+            data.forEach((row:(Payment|Invoice)) => {
+                let t = 'Invoice'
+                if(row instanceof Payment) {
+                    t = 'Payment'
                 }
-                let i  = Invoice.fromObject(row)
-                if (i) {
-                    return i
-                }
-                return undefined
+                list.render(row, t, 'end')
             })
-            .filter((row) => row !== undefined) as (Payment | Invoice)[]
-            if(data.length > 0) {
-                data.forEach((row) => {
-                    let t = 'Invoice'
-                    if(row instanceof Payment) {
-                        t = 'Payment'
-                    }
-                    list.render(row, t, 'end')
-                })
-            }
+
         }
+    })
+}
+
+async function getAllData() : Promise<(Payment | Invoice)[]> {
+    const result = await fetch('http://127.0.0.1:5002/api/all')
+    const json = await result.json()
+     
+    if (json === undefined || !Array.isArray(json)) {
+        console.error('recieved data is not a valid json array', json )
+        return []
+    } else {
+        let data = json.map((row) => {
+            let p  = Payment.fromObject(row)
+            if (p) {
+                return p
+            }
+            let i  = Invoice.fromObject(row)
+            if (i) {
+                return i
+            }
+            return undefined
+        })
+        .filter((row) => row !== undefined) as (Payment | Invoice)[]
+        return data
     }
-
 }
 
-function saveData() {
-    const newCookie = app_name + '=' + JSON.stringify(data)  + '; Secure; max-age=3600; SameSite=Lax'
-    document.cookie = newCookie
-    cookies = document.cookie
-}
-
-function createAppCookie(){
-    const newCookie = app_name + '=' + JSON.stringify([])  + '; Secure; max-age=3600; SameSite=Lax'
-    document.cookie = newCookie
-    cookies = document.cookie
-    console.log('finance app cookie created')
-}
 
 function formSubmit(e: Event) {
     e.preventDefault()
@@ -114,16 +68,20 @@ function formSubmit(e: Event) {
     let values: [string, string, number]
     values = [tofrom.value, details.value, amount.valueAsNumber]
 
+    renderList(values)
+
+}
+
+function renderList(values: [string, string, number]){
+
+    console.log(values)
     let doc: HasFormatter
     if (type.value === 'invoice') {
         const i  = new Invoice(...values )
-        data.push(i)
         doc = i
     } else {
         const p = new Payment(...values)
-        data.push(p)
         doc = p
     }
     list.render(doc, type.value, 'end')
-    saveData()
 }
