@@ -15,9 +15,52 @@ const ul = document.querySelector('ul')!;
 const list = new ListTemplate(ul)
 
 form.addEventListener('submit', formSubmit)
-// form.addEventListener('submit', (e: Event) => {
-//
-// })
+
+const insert_button = document.querySelector('#insert-button') as HTMLButtonElement
+insert_button.addEventListener('click', async (ev: Event) => {
+    const p = new Payment('Amily', 'Strawberies', 100)
+
+    const result = await fetch('http://127.0.0.1:5002/api/insert', {
+        method: 'POST',
+        headers: {
+            "Content-Type" : "application/json",
+        },
+        body: JSON.stringify(p) 
+    }) 
+    if (result.ok ){
+        const js = await result.json()
+        console.log('ok', js)
+    } else {
+        console.log('not ok', result.status)
+    }
+})
+
+async function insertToDB(values: [string, string, number]){
+
+    let doc: (Payment | Invoice)
+    if (type.value === 'invoice') {
+        const i  = new Invoice(...values )
+        doc = i
+    } else {
+        const p = new Payment(...values)
+        doc = p
+    }
+    const result = await fetch('http://127.0.0.1:5002/api/insert', {
+        method: 'POST',
+        headers: {
+            "Content-Type" : "application/json",
+        },
+        body: JSON.stringify(doc) 
+    }) 
+    if (result.ok ){
+        const js = await result.json()
+        console.log('ok', js)
+    } else {
+        console.log('not ok', result.status)
+    }
+
+
+}
 
 const app_name = 'finance_app'
 //let data:(Payment| Invoice)[]
@@ -62,13 +105,14 @@ async function getAllData() : Promise<(Payment | Invoice)[]> {
 }
 
 
-function formSubmit(e: Event) {
+async function formSubmit(e: Event) {
     e.preventDefault()
 
     let values: [string, string, number]
     values = [tofrom.value, details.value, amount.valueAsNumber]
 
     renderList(values)
+    await insertToDB(values)
 
 }
 
