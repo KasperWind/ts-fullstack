@@ -1,5 +1,13 @@
 import {HasFormatter} from './Formatters.js'
 
+export function fromObject(obj: any) : (Payment | Invoice | undefined) {
+    let p = Payment.fromObject(obj)
+    if (p) {return p}
+    let i = Invoice.fromObject(obj)
+    if (i) {return i}
+    return undefined
+}
+
 export class Invoice implements HasFormatter {
     constructor(
         readonly client: string,
