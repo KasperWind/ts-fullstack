@@ -11,7 +11,7 @@ export function fromObject(obj: any) : (Payment | Invoice | undefined) {
 export class Invoice implements HasFormatter {
     constructor(
         readonly client: string,
-        private details: string,
+        readonly details: string,
         public amount: number,
     ){}
 
@@ -30,7 +30,7 @@ export class Invoice implements HasFormatter {
 export class Payment implements HasFormatter {
     constructor(
         readonly recipient: string,
-        private details: string,
+        readonly details: string,
         public amount: number
     ){}
 

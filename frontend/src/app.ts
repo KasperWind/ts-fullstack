@@ -18,7 +18,9 @@ form.addEventListener('submit', formSubmit)
 
 const insert_button = document.querySelector('#insert-button') as HTMLButtonElement
 insert_button.addEventListener('click', async (ev: Event) => {
-    const p = new Payment('Amily', 'Strawberies', 100)
+    const p = [new Payment('Amily', 'Strawberies', 100), new Invoice('Kasper', 'hifi', 20000)]
+    // const p = new Payment('Amily', 'Strawberies', 100)
+    // const p = new Invoice('Kasper', 'hifi', 20000)
 
     const result = await fetch('http://127.0.0.1:5002/api/insert', {
         method: 'POST',

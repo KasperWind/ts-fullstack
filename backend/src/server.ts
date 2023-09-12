@@ -1,7 +1,7 @@
 import {Client} from 'pg'
-import { Invoice, Payment, fromObject } from './Domain'
+import { Invoice, Payment, fromObject} from './Domain'
+import { on } from 'events'
 const DB = process.env.DB
-const COLL = 'Finances'
 const PORT  = process.env.PORT 
 const PWD = process.env.PASSWORD
 const USER = process.env.PG_USER
@@ -34,7 +34,7 @@ async function getAll() : Promise<(Payment | Invoice)[] | undefined> {
 
 const BASE_PATH = "./dist/public"
 
-const server = Bun.serve({
+const _server = Bun.serve({
     port: PORT,
     async fetch(request) {
         const uri = new URL(request.url)
@@ -49,27 +49,49 @@ const server = Bun.serve({
                 }
             }
             if (uri.pathname === "/api/insert" && request.method === "POST") {
-                console.log("/api/insert", request.body)
-                // const database = client.db(DB)
-                // const finances = database.collection<(Payment | Invoice)>(COLL)
-                //
-                // if (Array.isArray(request.body)) {
-                //     console.log('isArray',  request.body)
-                //     return new Response(null, {status: 404})
-                //
-                // } else {
-                //     const obj = fromObject(request.body)
-                //
-                //     if (obj){
-                //         const result = await finances.insertOne(obj)
-                //         console.log(`A document was inserted with the _id: ${result.insertedId}`)
-                //         return new Response(JSON.stringify([]), {status:200})
-                //     } else {
-                //         console.log('Couldnt parse request')
-                //         return new Response(null, {status: 405})
-                //     }
-                // }
-                return new Response(null, {status: 404})
+                let json = await request.json() as any[]
+
+                if (!Array.isArray(json)) {
+                    json = [json]
+                } 
+
+                console.log("/api/insert", json)
+
+                const entries = json.map((a) => {
+                    return fromObject(a);
+                }).filter((e) => {return e !== undefined}) as (Payment | Invoice)[]
+
+                console.log(entries)
+
+                const client = new Client({"user":USER, "password":PWD, "database": DB})
+                await client.connect()
+             
+                let resp = undefined
+                try {
+                    for await (let e of entries) {
+                        let sql = ''
+                        if (typeof(e) === typeof(Invoice)) {
+                            let i = e as Invoice
+                            sql = `INSERT INTO "finance" (to_from, details, type, amount) VALUES ('${i.client}', '${i.details}', 'invoice', ${i.amount});`
+                        } else {
+                            let i = e as Payment
+                            sql = `INSERT INTO "finance" (to_from, details, type, amount) VALUES ('${i.recipient}', '${i.details}', 'payment', ${i.amount});`
+
+                        }
+                        const _res = await client.query(sql)
+                    }
+
+                    resp =  new Response(JSON.stringify([]), {status: 200})
+
+                } catch (err) {
+                    console.error(err);
+                    resp = new Response(null, {status: 500})
+                } finally {
+                    await client.end()
+                }
+
+                return resp
+
             }
             return new Response(null, {status: 404})
         }
