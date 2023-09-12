@@ -1,9 +1,9 @@
 import {HasFormatter} from './Formatters.js'
 
 export function fromObject(obj: any) : (Payment | Invoice | undefined) {
-    let p = Payment.fromObject(obj)
+    const p = Payment.fromObject(obj)
     if (p) {return p}
-    let i = Invoice.fromObject(obj)
+    const i = Invoice.fromObject(obj)
     if (i) {return i}
     return undefined
 }
